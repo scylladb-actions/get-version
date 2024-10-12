@@ -1,0 +1,44 @@
+  name: 'Get Version'
+  description: 'Get version from specified source'
+  branding:
+      icon: "check"
+      color: orange
+  inputs:
+      source:
+        description: 'Version source, one of: dockerhub-imagetag, maven-artifact, github-release, github-tag'
+        required: true
+      repo:
+        description: 'Repository name. Examples for dockerhub: ubuntu or alpine/git; for github: golang/go or scylladb/scylla'
+        required: false
+      prefix:
+        description: 'Version prefix'
+        required: false
+      out-no-prefix:
+        description: 'Remove prefix from output'
+        required: false
+      mvn-group:
+        description: 'Artifact group to search on the maven'
+        required: false
+      mvn-artifact-id:
+        description: 'Artifact ID to search on the maven'
+        required: false
+      filters:
+        description: 'Filters to apply to versions. Example: "LAST.*.*"'
+        required: false
+  outputs:
+    versions:
+      description: 'Found versions'
+
+  runs:
+      image: "docker://scylladb/github-actions:get-version-v0.1.0"
+      using: "docker"
+      args:
+        - --source=${{ inputs.source }}
+        - --mvn-artifact-id=${{ inputs.mvn-artifact-id }}
+        - --mvn-group=${{ inputs.mvn-group }}
+        - --out-no-prefix=${{ inputs.out-no-prefix }}
+        - --filters=${{ inputs.filters }}
+        - --repo=${{ inputs.repo }}
+        - --prefix=${{ inputs.prefix }}
+        - --out-format json
+        - --out-as-action

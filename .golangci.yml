@@ -1,0 +1,39 @@
+issues:
+  new: true
+  new-from-rev: origin/main
+linters:
+  disable-all: true
+  enable:
+  - errcheck
+  - gocritic
+  - gofumpt
+  - goheader
+  - goimports
+  - gosimple
+  - govet
+  - ineffassign
+  - lll
+  - misspell
+  - predeclared
+  - revive
+  - staticcheck
+  - thelper
+  - tparallel
+  - typecheck
+  - unused
+run:
+  allow-parallel-runners: true
+  deadline: 2m
+  modules-download-mode: readonly
+  tests: true
+  go: '1.22'
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+    - shadow
+    - fieldalignment
+  gofumpt:
+    extra-rules: true
+  goimports:
+    local-prefixes: github.com/scylladb-actions/jenkins-client
