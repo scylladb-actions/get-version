@@ -1,4 +1,4 @@
-  name: 'Get Version'
+  name: 'Get version from specified source'
   description: 'Get version from specified source'
   branding:
       icon: "check"
