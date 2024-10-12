@@ -32,7 +32,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	o := output.NewOutput(p)
+	o, err := output.NewOutput(p)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err.Error())
+		os.Exit(1)
+	}
 
 	allVersions, _, err := source.GetAllVersions()
 	if err != nil {
