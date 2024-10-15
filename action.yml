@@ -16,6 +16,7 @@
       out-no-prefix:
         description: 'Remove prefix from output'
         required: false
+        default: "false"
       mvn-group:
         description: 'Artifact group to search on the maven'
         required: false
@@ -30,15 +31,14 @@
       description: 'Found versions'
 
   runs:
-      image: "docker://scylladb/github-actions:get-version-v0.1.0"
+      image: "docker://scylladb/github-actions:get-version-v0.2.0"
       using: "docker"
       args:
         - --source=${{ inputs.source }}
         - --mvn-artifact-id=${{ inputs.mvn-artifact-id }}
         - --mvn-group=${{ inputs.mvn-group }}
-        - --out-no-prefix=${{ inputs.out-no-prefix }}
         - --filters=${{ inputs.filters }}
         - --repo=${{ inputs.repo }}
         - --prefix=${{ inputs.prefix }}
-        - --out-format json
+        - --out-format=json
         - --out-as-action

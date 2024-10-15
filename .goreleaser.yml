@@ -1,0 +1,65 @@
+version: 2
+
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  -
+    ldflags: -s -w
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goamd64:
+      - v3
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  version_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+dockers:
+  - image_templates:
+      - scylladb/github-actions:get-version-v{{ .Version }}-amd64
+    goarch: amd64
+    goamd64: v3
+    goos: linux
+    id: get-version-amd64
+    build_flag_templates:
+      - --platform=linux/amd64
+
+  - image_templates:
+      - scylladb/github-actions:get-version-v{{ .Version }}-arm64v8
+    goarch: arm64
+    id: get-version-arm
+    goos: linux
+    build_flag_templates:
+      - --platform=linux/arm64/v8
+
+archives:
+  - id: get-version
+    format: zip
+    files: []
+
+docker_manifests:
+  - name_template: 'scylladb/github-actions:get-version-v{{ .Version }}'
+    skip_push: false
+    image_templates:
+      - 'scylladb/github-actions:get-version-v{{ .Version }}-amd64'
+      - 'scylladb/github-actions:get-version-v{{ .Version }}-arm64v8'

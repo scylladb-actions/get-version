@@ -18,6 +18,7 @@ type Params struct {
 	OutNoPrefix       bool
 	OutReverseOrder   bool
 	OutAsAction       bool
+	SSLVerify         bool
 }
 
 func (p *Params) Parse(knownSources Sources) error {
@@ -34,6 +35,7 @@ func (p *Params) Parse(knownSources Sources) error {
 	flag.StringVar(&p.MavenGroup, "mvn-group", "", "Artifact group to search on the maven")
 	flag.StringVar(&p.MavenArtifactID, "mvn-artifact-id", "", "Artifact ID to search on the maven")
 	flag.BoolVar(&p.OutAsAction, "out-as-action", false, "Output to a GitHub action output")
+	flag.BoolVar(&p.SSLVerify, "ssl-verify", false, "Verify server SSL certificate")
 
 	flag.Parse()
 

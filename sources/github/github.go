@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/scylladb-actions/get-version/httpclient"
 	"github.com/scylladb-actions/get-version/types"
 	"github.com/scylladb-actions/get-version/version"
 )
@@ -43,10 +44,10 @@ func getNextLink(resp *http.Response) string {
 }
 
 func executeQuery(
+	cl *http.Client,
 	url string,
 	extractor versionExtractor,
 ) (out version.Versions, ignored []types.IgnoredVersion, next string, err error) {
-	cl := http.DefaultClient
 	var rq *http.Request
 	rq, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -110,12 +111,13 @@ func extractVersionsFromRelease(resp *http.Response, prefix string) (version.Ver
 }
 
 func getVersionsFromGitHub(
+	cl *http.Client,
 	url string,
 	extractor versionExtractor,
 ) (out version.Versions, ignored []types.IgnoredVersion, err error) {
 	for url != "" {
 		for retry := 0; ; retry++ {
-			versions, ignoredVersions, nextURL, err := executeQuery(url, extractor)
+			versions, ignoredVersions, nextURL, err := executeQuery(cl, url, extractor)
 			if err != nil {
 				if retry > 5 {
 					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, err)
@@ -132,34 +134,34 @@ func getVersionsFromGitHub(
 }
 
 type TagSource struct {
-	repo   string
-	prefix string
+	params types.Params
 }
 
 func (s TagSource) GetAllVersions() (version.Versions, []types.IgnoredVersion, error) {
 	return getVersionsFromGitHub(
-		getGitHubTagURL(s.repo), func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
-			return extractVersionsFromRelease(r, s.prefix)
+		httpclient.New(s.params),
+		getGitHubTagURL(s.params.Repo), func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
+			return extractVersionsFromRelease(r, s.params.Prefix)
 		})
 }
 
-func NewTagSource(repo, prefix string) TagSource {
-	return TagSource{repo: repo, prefix: prefix}
+func NewTagSource(params types.Params) TagSource {
+	return TagSource{params: params}
 }
 
 type ReleaseSource struct {
-	repo   string
-	prefix string
+	params types.Params
 }
 
 func (s ReleaseSource) GetAllVersions() (out version.Versions, ignored []types.IgnoredVersion, err error) {
 	return getVersionsFromGitHub(
-		getGitHubReleaseURL(s.repo),
+		httpclient.New(s.params),
+		getGitHubReleaseURL(s.params.Repo),
 		func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
-			return extractVersionsFromRelease(r, s.prefix)
+			return extractVersionsFromRelease(r, s.params.Prefix)
 		})
 }
 
-func NewReleaseSource(repo, prefix string) ReleaseSource {
-	return ReleaseSource{repo: repo, prefix: prefix}
+func NewReleaseSource(params types.Params) ReleaseSource {
+	return ReleaseSource{params: params}
 }

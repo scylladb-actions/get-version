@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/scylladb-actions/get-version/httpclient"
 	"github.com/scylladb-actions/get-version/types"
 	"github.com/scylladb-actions/get-version/version"
 )
@@ -18,10 +19,10 @@ func getURL(group, artifactID string) string {
 }
 
 func executeQuery(
+	cl *http.Client,
 	url string,
 	extractor versionExtractor,
 ) (out version.Versions, ignored []types.IgnoredVersion, err error) {
-	cl := http.DefaultClient
 	var rq *http.Request
 	rq, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -82,9 +83,13 @@ func extractVersions(resp *http.Response, prefix string) (version.Versions, []ty
 	return out, ignored, nil
 }
 
-func getVersionsFromMVN(url string, extractor versionExtractor) (version.Versions, []types.IgnoredVersion, error) {
+func getVersionsFromMVN(
+	cl *http.Client,
+	url string,
+	extractor versionExtractor,
+) (version.Versions, []types.IgnoredVersion, error) {
 	for retry := 0; ; retry++ {
-		versions, ignoredVersions, err := executeQuery(url, extractor)
+		versions, ignoredVersions, err := executeQuery(cl, url, extractor)
 		if err == nil {
 			return versions, ignoredVersions, nil
 		}
@@ -100,6 +105,7 @@ type Source struct {
 
 func (s Source) GetAllVersions() (version.Versions, []types.IgnoredVersion, error) {
 	return getVersionsFromMVN(
+		httpclient.New(s.params),
 		getURL(s.params.MavenGroup, s.params.MavenArtifactID),
 		func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
 			return extractVersions(r, s.params.Prefix)

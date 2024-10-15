@@ -11,16 +11,18 @@ This action allows you to get version of the software from different sources:
 ```yaml
 jobs:
   run-jenkins-job:
+    runs-on: ubuntu-latest
     steps:
       - name: Get Latest Ubuntu version
         id: get-ubuntu-version
         uses: scylladb-actions/get-version@v0.1.0
         with:
-            source: dockerhub-imagetag
-            repo: ubuntu
-            filter: LAST.LAST.LAST
+          source: dockerhub-imagetag
+          repo: ubuntu
+          filters: LAST.LAST.LAST
+
       - name: Print the version
-        run: echo "The version is ${{ steps.get-ubuntu-version.outputs.versions }}"
+        run: echo "The version is ${{ fromJson(steps.get-ubuntu-version.outputs.versions)[0] }}"
 ```
 
 ### Cli usage

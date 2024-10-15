@@ -8,16 +8,16 @@ import (
 )
 
 var AllSources = types.Sources{
-	types.GitHubRelease: func(p types.Params) (types.Source, error) {
-		return github.NewReleaseSource(p.Repo, p.Prefix), nil
+	types.GitHubRelease: func(params types.Params) (types.Source, error) {
+		return github.NewReleaseSource(params), nil
 	},
-	types.GitHubTag: func(p types.Params) (types.Source, error) {
-		return github.NewTagSource(p.Repo, p.Prefix), nil
+	types.GitHubTag: func(params types.Params) (types.Source, error) {
+		return github.NewTagSource(params), nil
 	},
-	types.DockerHubImageTag: func(p types.Params) (types.Source, error) {
-		return docker.New(p)
+	types.DockerHubImageTag: func(params types.Params) (types.Source, error) {
+		return docker.New(params)
 	},
-	types.MavenArtifact: func(p types.Params) (types.Source, error) {
-		return maven.New(p)
+	types.MavenArtifact: func(params types.Params) (types.Source, error) {
+		return maven.New(params)
 	},
 }

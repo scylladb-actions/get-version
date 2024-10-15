@@ -23,7 +23,7 @@ type Text struct {
 func (o Text) Write(versions version.Versions) error {
 	for _, version := range versions.
 		Order(o.params.OutReverseOrder).
-		AsStringSlice(o.params.OutNoPrefix) {
+		AsStringSlice(!o.params.OutNoPrefix) {
 		fmt.Fprintln(o.output, version)
 	}
 	return nil
@@ -42,7 +42,7 @@ func (o JSON) Write(versions version.Versions) error {
 	return json.NewEncoder(o.output).Encode(
 		versions.
 			Order(o.params.OutReverseOrder).
-			AsStringSlice(o.params.OutNoPrefix),
+			AsStringSlice(!o.params.OutNoPrefix),
 	)
 }
 
@@ -59,7 +59,7 @@ func (o YAML) Write(versions version.Versions) error {
 	return yaml.NewEncoder(o.output).Encode(
 		versions.
 			Order(o.params.OutReverseOrder).
-			AsStringSlice(o.params.OutNoPrefix),
+			AsStringSlice(!o.params.OutNoPrefix),
 	)
 }
 

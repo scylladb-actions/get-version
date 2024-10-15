@@ -70,7 +70,7 @@ func (p StringPattern) Apply(
 	case p.isRegexp():
 		re := regexp.MustCompile(p.asString())
 		filter = func(v version.Version) bool {
-			return re.MatchString(versionPeaceGetter(v))
+			return !re.MatchString(versionPeaceGetter(v))
 		}
 	case p.isAny():
 		return sorted

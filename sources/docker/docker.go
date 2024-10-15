@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/scylladb-actions/get-version/httpclient"
 	"github.com/scylladb-actions/get-version/types"
 	"github.com/scylladb-actions/get-version/version"
 )
@@ -24,9 +25,9 @@ func getDockerURLFromRepo(repo string) string {
 }
 
 func getDockerImageVersionsOnce(
+	cl *http.Client,
 	url, prefix string,
 ) (out version.Versions, ignored []types.IgnoredVersion, next string, err error) {
-	cl := http.DefaultClient
 	var rq *http.Request
 	rq, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -83,10 +84,11 @@ type Source struct {
 }
 
 func (s Source) GetAllVersions() (out version.Versions, ignored []types.IgnoredVersion, err error) {
+	cl := httpclient.New(s.params)
 	url := getDockerURLFromRepo(s.params.Repo)
 	for url != "" {
 		for retry := 0; ; retry++ {
-			versions, ignoredVersions, nextURL, err := getDockerImageVersionsOnce(url, s.params.Prefix)
+			versions, ignoredVersions, nextURL, err := getDockerImageVersionsOnce(cl, url, s.params.Prefix)
 			if err != nil {
 				if retry > 5 {
 					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, err)
