@@ -4,15 +4,23 @@ import "github.com/scylladb-actions/get-version/version"
 
 type And []Filter
 
+func NewAnd(filters ...Filter) And {
+	return filters
+}
+
 func (f And) Apply(versions version.Versions) version.Versions {
-	result := versions
+	out := versions
 	for _, filter := range f {
-		result = filter.Apply(result)
+		out = filter.Apply(out)
 	}
-	return versions
+	return out
 }
 
 type Or []Filter
+
+func NewOr(filters ...Filter) Or {
+	return filters
+}
 
 func (f Or) Apply(versions version.Versions) version.Versions {
 	set := map[version.Version]struct{}{}
