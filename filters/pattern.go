@@ -181,7 +181,7 @@ func NewPattern(value string) (Pattern, error) {
 
 	err := filter.Validate()
 	if err != nil {
-		return Pattern{}, err
+		return Pattern{}, fmt.Errorf("invalid filter %q: %w", value, err)
 	}
 	return filter, nil
 }

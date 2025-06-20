@@ -2,6 +2,7 @@ package filters
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/scylladb-actions/get-version/version"
 )
@@ -28,6 +29,28 @@ func ParseFilterString(filter string) (Filter, error) {
 	// TBD: add more filters: and, or, grouping
 	if filter == "" {
 		return EmptyFilter{}, nil
+	}
+	if strings.Contains(filter, " and ") {
+		var filters []Filter
+		for _, chunk := range strings.Split(filter, " and ") {
+			f, err := NewPattern(chunk)
+			if err != nil {
+				return nil, err
+			}
+			filters = append(filters, f)
+		}
+		return NewAnd(filters...), nil
+	}
+	if strings.Contains(filter, " or ") {
+		var filters []Filter
+		for _, chunk := range strings.Split(filter, " or ") {
+			f, err := NewPattern(chunk)
+			if err != nil {
+				return nil, err
+			}
+			filters = append(filters, f)
+		}
+		return NewOr(filters...), nil
 	}
 	return NewPattern(filter)
 }
