@@ -3,9 +3,10 @@ package output
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
 	"os"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/scylladb-actions/get-version/types"
 	"github.com/scylladb-actions/get-version/version"
@@ -86,7 +87,7 @@ func getOutputDestination(p types.Params) (*os.File, error) {
 		if gitHubActionOutput == "" {
 			return nil, fmt.Errorf("GITHUB_OUTPUT is not set")
 		}
-		writer, err := os.OpenFile(os.Getenv("GITHUB_OUTPUT"), os.O_APPEND|os.O_WRONLY, 0644)
+		writer, err := os.OpenFile(os.Getenv("GITHUB_OUTPUT"), os.O_APPEND|os.O_WRONLY, 0o644)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open file %q: %w", gitHubActionOutput, err)
 		}
