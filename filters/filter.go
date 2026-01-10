@@ -33,7 +33,7 @@ func ParseFilterString(filter string) (Filter, error) {
 	if strings.Contains(filter, " and ") {
 		var filters []Filter
 		for _, chunk := range strings.Split(filter, " and ") {
-			f, err := NewPattern(chunk)
+			f, err := parseFilterChunk(chunk)
 			if err != nil {
 				return nil, err
 			}
@@ -44,7 +44,7 @@ func ParseFilterString(filter string) (Filter, error) {
 	if strings.Contains(filter, " or ") {
 		var filters []Filter
 		for _, chunk := range strings.Split(filter, " or ") {
-			f, err := NewPattern(chunk)
+			f, err := parseFilterChunk(chunk)
 			if err != nil {
 				return nil, err
 			}
@@ -52,5 +52,16 @@ func ParseFilterString(filter string) (Filter, error) {
 		}
 		return NewOr(filters...), nil
 	}
-	return NewPattern(filter)
+	return parseFilterChunk(filter)
+}
+
+// parseFilterChunk parses a single filter chunk (no "and"/"or" operators)
+// Tries GlobalPosition first (if no dots), then Pattern
+func parseFilterChunk(chunk string) (Filter, error) {
+	// Check if it's a global position filter (no dots, starts with FIRST/LAST)
+	if isGlobalPosition(chunk) {
+		return NewGlobalPosition(chunk)
+	}
+	// Fall back to pattern parsing
+	return NewPattern(chunk)
 }
