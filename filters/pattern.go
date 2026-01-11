@@ -140,6 +140,8 @@ func (f Pattern) Apply(versions version.Versions) version.Versions {
 		return f.patch.Apply(filtered, version.Version.PatchStr, version.Versions.UniquePatches)
 	}
 
+	// Sort versions before GroupAndFilter since it relies on consecutive grouping
+	filtered = filtered.Order(false)
 	filtered = f.major.Apply(filtered, version.Version.MajorStr, version.Versions.UniqueMajors)
 	if !f.patch.isSpecial() {
 		return filtered.GroupAndFilter(version.Version.MajorStr, func(versions version.Versions) version.Versions {
