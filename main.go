@@ -19,6 +19,10 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
+	if p.ShowVersion {
+		fmt.Fprintln(os.Stdout, buildVersion)
+		return
+	}
 
 	source, err := sources.AllSources.GetSource(p)
 	if err != nil {

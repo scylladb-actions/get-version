@@ -48,6 +48,7 @@ jobs:
 * `--out-no-prefix` - Remove version prefix from output
 * `--out-reverse-order` - Reverse sort order
 * `--prefix` - Version prefix to match
+* `--version` - Print CLI version and exit
 * `--mvn-group` - Maven artifact group
 * `--mvn-artifact-id` - Maven artifact ID
 
