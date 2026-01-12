@@ -31,7 +31,7 @@
       description: 'Found versions'
 
   runs:
-      image: "docker://scylladb/github-actions:get-version-v0.4.1"
+      image: "docker://scylladb/github-actions:get-version-v0.4.2"
       using: "docker"
       args:
         - --source=${{ inputs.source }}
