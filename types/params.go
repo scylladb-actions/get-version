@@ -20,6 +20,9 @@ type Params struct {
 	OutAsAction       bool
 	SSLVerify         bool
 	ShowVersion       bool
+	RetryMax          int
+	RetryInitialDelay int
+	RetryMaxDelay     int
 }
 
 func (p *Params) Parse(knownSources Sources) error {
@@ -38,6 +41,9 @@ func (p *Params) Parse(knownSources Sources) error {
 	flag.BoolVar(&p.OutAsAction, "out-as-action", false, "Output to a GitHub action output")
 	flag.BoolVar(&p.SSLVerify, "ssl-verify", false, "Verify server SSL certificate")
 	flag.BoolVar(&p.ShowVersion, "version", false, "Print version and exit")
+	flag.IntVar(&p.RetryMax, "retry-max", 5, "Maximum number of retries for rate-limited requests")
+	flag.IntVar(&p.RetryInitialDelay, "retry-initial-delay", 1000, "Initial retry delay in milliseconds for exponential backoff")
+	flag.IntVar(&p.RetryMaxDelay, "retry-max-delay", 30000, "Maximum retry delay in milliseconds for exponential backoff")
 
 	flag.Parse()
 

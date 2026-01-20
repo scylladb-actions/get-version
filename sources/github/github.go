@@ -2,14 +2,19 @@ package github
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/scylladb-actions/get-version/httpclient"
 	"github.com/scylladb-actions/get-version/types"
 	"github.com/scylladb-actions/get-version/version"
 )
+
+// ErrRateLimited is returned when GitHub API returns 403 rate limit exceeded
+var ErrRateLimited = errors.New("rate limit exceeded")
 
 var (
 	githubReleaseURL = "https://api.github.com/repos/%s/releases?per_page=100"
@@ -58,6 +63,10 @@ func executeQuery(
 	if err != nil {
 		return nil, nil, "",
 			fmt.Errorf("failed to execute http GET request for url %q: %w", url, err)
+	}
+	if resp.StatusCode == http.StatusForbidden {
+		return nil, nil, "",
+			fmt.Errorf("%w: server replied with %s for url %q", ErrRateLimited, resp.Status, url)
 	}
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
 		return nil, nil, "",
@@ -114,13 +123,22 @@ func getVersionsFromGitHub(
 	cl *http.Client,
 	url string,
 	extractor versionExtractor,
+	params types.Params,
 ) (out version.Versions, ignored []types.IgnoredVersion, err error) {
 	for url != "" {
 		for retry := 0; ; retry++ {
-			versions, ignoredVersions, nextURL, err := executeQuery(cl, url, extractor)
-			if err != nil {
-				if retry > 5 {
-					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, err)
+			versions, ignoredVersions, nextURL, queryErr := executeQuery(cl, url, extractor)
+			if queryErr != nil {
+				if retry >= params.RetryMax {
+					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, queryErr)
+				}
+				// Apply exponential backoff for rate limit errors
+				if errors.Is(queryErr, ErrRateLimited) {
+					delay := params.RetryInitialDelay * (1 << retry) // 2^retry * initial delay
+					if delay > params.RetryMaxDelay {
+						delay = params.RetryMaxDelay
+					}
+					time.Sleep(time.Duration(delay) * time.Millisecond)
 				}
 				continue
 			}
@@ -140,9 +158,12 @@ type TagSource struct {
 func (s TagSource) GetAllVersions() (version.Versions, []types.IgnoredVersion, error) {
 	return getVersionsFromGitHub(
 		httpclient.New(s.params),
-		getGitHubTagURL(s.params.Repo), func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
+		getGitHubTagURL(s.params.Repo),
+		func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
 			return extractVersionsFromRelease(r, s.params.Prefix)
-		})
+		},
+		s.params,
+	)
 }
 
 func NewTagSource(params types.Params) TagSource {
@@ -159,7 +180,9 @@ func (s ReleaseSource) GetAllVersions() (out version.Versions, ignored []types.I
 		getGitHubReleaseURL(s.params.Repo),
 		func(r *http.Response) (version.Versions, []types.IgnoredVersion, error) {
 			return extractVersionsFromRelease(r, s.params.Prefix)
-		})
+		},
+		s.params,
+	)
 }
 
 func NewReleaseSource(params types.Params) ReleaseSource {

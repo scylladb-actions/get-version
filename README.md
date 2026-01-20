@@ -51,6 +51,9 @@ jobs:
 * `--version` - Print CLI version and exit
 * `--mvn-group` - Maven artifact group
 * `--mvn-artifact-id` - Maven artifact ID
+* `--retry-max` - Maximum number of retries for rate-limited requests (default: `5`)
+* `--retry-initial-delay` - Initial retry delay in milliseconds (default: `1000`)
+* `--retry-max-delay` - Maximum retry delay in milliseconds (default: `30000`)
 
 **Examples:**
 
@@ -74,6 +77,27 @@ get-version --source github-release --repo golang/go --filters "LAST"
 # Get all 3.x versions from latest major
 get-version --source dockerhub-imagetag --repo alpine --filters "LAST.*.*"
 ```
+
+### Rate Limiting
+
+GitHub API has rate limits that may cause `403 Forbidden` errors. The tool handles this with configurable exponential backoff:
+
+```bash
+# Default behavior: 5 retries, starting at 1s delay, max 30s delay
+get-version --source github-release --repo golang/go --filters "LAST"
+
+# Custom retry settings for high-traffic scenarios
+get-version --source github-tag --repo kubernetes/kubernetes --filters "LAST" \
+  --retry-max 10 \
+  --retry-initial-delay 2000 \
+  --retry-max-delay 60000
+```
+
+**How exponential backoff works:**
+- On rate limit (HTTP 403), waits before retrying
+- Delay doubles each retry: 1s → 2s → 4s → 8s → ...
+- Delay is capped at `--retry-max-delay`
+- Gives up after `--retry-max` attempts
 
 ## Filter Syntax
 
