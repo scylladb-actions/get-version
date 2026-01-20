@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Get Latest Ubuntu version
         id: get-latest
-        uses: scylladb-actions/get-version@v0.4.2
+        uses: scylladb-actions/get-version@v0.4.3
         with:
           source: dockerhub-imagetag
           repo: ubuntu
@@ -26,7 +26,7 @@ jobs:
 
       - name: Get stable version (second-to-last)
         id: get-stable
-        uses: scylladb-actions/get-version@v0.4.2
+        uses: scylladb-actions/get-version@v0.4.3
         with:
           source: dockerhub-imagetag
           repo: ubuntu
