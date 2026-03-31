@@ -51,6 +51,7 @@ func getNextLink(resp *http.Response) string {
 func executeQuery(
 	cl *http.Client,
 	url string,
+	token string,
 	extractor versionExtractor,
 ) (out version.Versions, ignored []types.IgnoredVersion, next string, err error) {
 	var rq *http.Request
@@ -59,6 +60,9 @@ func executeQuery(
 		return nil, nil, "", err
 	}
 	rq.Header.Set("Accept", "application/vnd.github+json")
+	if token != "" {
+		rq.Header.Set("Authorization", "Bearer "+token)
+	}
 	resp, err := cl.Do(rq)
 	if err != nil {
 		return nil, nil, "",
@@ -127,7 +131,7 @@ func getVersionsFromGitHub(
 ) (out version.Versions, ignored []types.IgnoredVersion, err error) {
 	for url != "" {
 		for retry := 0; ; retry++ {
-			versions, ignoredVersions, nextURL, queryErr := executeQuery(cl, url, extractor)
+			versions, ignoredVersions, nextURL, queryErr := executeQuery(cl, url, params.GitHubToken, extractor)
 			if queryErr != nil {
 				if retry >= params.RetryMax {
 					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, queryErr)
