@@ -26,6 +26,10 @@
       filters:
         description: 'Filters to apply to versions. Example: "LAST.*.*"'
         required: false
+      github-token:
+        description: 'GitHub API token for authenticated requests (increases rate limit from 60 to 5000 requests/hour)'
+        required: false
+        default: ""
   outputs:
     versions:
       description: 'Found versions'
@@ -33,6 +37,8 @@
   runs:
       image: "docker://scylladb/github-actions:get-version-v0.4.4"
       using: "docker"
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
       args:
         - --source=${{ inputs.source }}
         - --mvn-artifact-id=${{ inputs.mvn-artifact-id }}

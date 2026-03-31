@@ -3,6 +3,7 @@ package types
 import (
 	"flag"
 	"fmt"
+	"os"
 	"slices"
 	"strings"
 )
@@ -23,6 +24,7 @@ type Params struct {
 	RetryMax          int
 	RetryInitialDelay int
 	RetryMaxDelay     int
+	GitHubToken       string
 }
 
 func (p *Params) Parse(knownSources Sources) error {
@@ -44,8 +46,18 @@ func (p *Params) Parse(knownSources Sources) error {
 	flag.IntVar(&p.RetryMax, "retry-max", 5, "Maximum number of retries for rate-limited requests")
 	flag.IntVar(&p.RetryInitialDelay, "retry-initial-delay", 1000, "Initial retry delay in milliseconds for exponential backoff")
 	flag.IntVar(&p.RetryMaxDelay, "retry-max-delay", 30000, "Maximum retry delay in milliseconds for exponential backoff")
+	flag.StringVar(&p.GitHubToken, "github-token", "",
+		"GitHub API token (overrides GH_TOKEN/GITHUB_TOKEN env vars)")
 
 	flag.Parse()
+
+	if p.GitHubToken == "" {
+		if token := os.Getenv("GH_TOKEN"); token != "" {
+			p.GitHubToken = token
+		} else if token := os.Getenv("GITHUB_TOKEN"); token != "" {
+			p.GitHubToken = token
+		}
+	}
 
 	if p.ShowVersion {
 		return nil
