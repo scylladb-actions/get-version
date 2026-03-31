@@ -35,7 +35,7 @@
       description: 'Found versions'
 
   runs:
-      image: "docker://scylladb/github-actions:get-version-v0.4.4"
+      image: "docker://scylladb/github-actions:get-version-v0.4.5"
       using: "docker"
       env:
         GH_TOKEN: ${{ inputs.github-token }}
