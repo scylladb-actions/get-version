@@ -26,20 +26,26 @@ func getDockerURLFromRepo(repo string) string {
 
 func getDockerImageVersionsOnce(
 	cl *http.Client,
-	url, prefix string,
-) (out version.Versions, ignored []types.IgnoredVersion, next string, err error) {
+	url, prefix, authToken string,
+) (out version.Versions, ignored []types.IgnoredVersion, next string, statusCode int, err error) {
 	var rq *http.Request
 	rq, err = http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		return nil, nil, "", err
+		return nil, nil, "", 0, err
+	}
+	if authToken != "" {
+		rq.Header.Set("Authorization", "Bearer "+authToken)
 	}
 	resp, err := cl.Do(rq)
 	if err != nil {
-		return nil, nil, "",
+		return nil, nil, "", 0,
 			fmt.Errorf("failed to execute http GET request for url %q: %w", url, err)
 	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, nil, "",
+		return nil, nil, "", resp.StatusCode,
 			fmt.Errorf("failed to execute http GET request for url %q, server replied with %s", url, resp.Status)
 	}
 
@@ -55,7 +61,7 @@ func getDockerImageVersionsOnce(
 	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&body)
 	if err != nil {
-		return nil, nil, "", fmt.Errorf("failed to parse server response: %w", err)
+		return nil, nil, "", resp.StatusCode, fmt.Errorf("failed to parse server response: %w", err)
 	}
 
 	for _, rec := range body.Results {
@@ -76,7 +82,7 @@ func getDockerImageVersionsOnce(
 		ver.SetPrefix(prefix)
 		out = append(out, ver)
 	}
-	return out, ignored, body.Next, nil
+	return out, ignored, body.Next, resp.StatusCode, nil
 }
 
 type Source struct {
@@ -85,11 +91,20 @@ type Source struct {
 
 func (s Source) GetAllVersions() (out version.Versions, ignored []types.IgnoredVersion, err error) {
 	cl := httpclient.New(s.params)
+	authToken, authTokenErr := getDockerHubAuthToken(cl)
 	url := getDockerURLFromRepo(s.params.Repo)
 	for url != "" {
 		for retry := 0; ; retry++ {
-			versions, ignoredVersions, nextURL, err := getDockerImageVersionsOnce(cl, url, s.params.Prefix)
+			versions, ignoredVersions, nextURL, statusCode, err := getDockerImageVersionsOnce(
+				cl,
+				url,
+				s.params.Prefix,
+				authToken,
+			)
 			if err != nil {
+				if authTokenErr != nil && (statusCode == http.StatusForbidden || statusCode == http.StatusUnauthorized) {
+					return nil, nil, fmt.Errorf("%w; failed to resolve Docker CLI credentials: %v", err, authTokenErr)
+				}
 				if retry > 5 {
 					return nil, nil, fmt.Errorf("failed to execute query to %s, last error: %w", url, err)
 				}
