@@ -1,6 +1,6 @@
 # Identify Operating System
 
-GOLANGCI_LINT_VERSION = 1.61.0
+GOLANGCI_LINT_VERSION = 2.11.4
 CURRENT_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 BIN_DIR := "${CURRENT_DIR}bin"
 DOCKER_IMAGE_TAG ?= get-version
