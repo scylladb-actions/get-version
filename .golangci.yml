@@ -1,3 +1,4 @@
+version: "2"
 issues:
   new: true
   new-from-rev: origin/main
@@ -6,10 +7,7 @@ linters:
   enable:
   - errcheck
   - gocritic
-  - gofumpt
   - goheader
-  - goimports
-  - gosimple
   - govet
   - ineffassign
   - lll
@@ -19,21 +17,25 @@ linters:
   - staticcheck
   - thelper
   - tparallel
-  - typecheck
   - unused
+formatters:
+  enable:
+  - gofumpt
+  - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
+    goimports:
+      local-prefixes: github.com/scylladb-actions/get-version
 run:
   allow-parallel-runners: true
-  deadline: 2m
+  timeout: 2m
   modules-download-mode: readonly
   tests: true
-  go: '1.22'
+  go: '1.25'
 linters-settings:
   govet:
     enable-all: true
     disable:
     - shadow
     - fieldalignment
-  gofumpt:
-    extra-rules: true
-  goimports:
-    local-prefixes: github.com/scylladb-actions/jenkins-client

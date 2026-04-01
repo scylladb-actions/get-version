@@ -47,8 +47,9 @@ func (o JSON) Write(versions version.Versions) error {
 	)
 }
 
-func NewYAML(params types.Params, output io.Writer) JSON {
-	return JSON{params: params, output: output}
+// NewYAML creates a new YAML output writer.
+func NewYAML(params types.Params, output io.Writer) YAML {
+	return YAML{params: params, output: output}
 }
 
 type YAML struct {
