@@ -32,10 +32,20 @@ jobs:
           repo: ubuntu
           filters: "[0-9]+.[0-9]+.LAST and LAST-1"
 
+      - name: Get latest Go release from GitHub
+        id: get-go-release
+        uses: scylladb-actions/get-version@v0.4.5
+        with:
+          source: github-release
+          repo: golang/go
+          filters: LAST
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Print versions
         run: |
           echo "Latest: ${{ fromJson(steps.get-latest.outputs.versions)[0] }}"
           echo "Stable: ${{ fromJson(steps.get-stable.outputs.versions)[0] }}"
+          echo "Go release: ${{ fromJson(steps.get-go-release.outputs.versions)[0] }}"
 ```
 
 ### CLI Usage
@@ -54,6 +64,7 @@ jobs:
 * `--retry-max` - Maximum number of retries for rate-limited requests (default: `5`)
 * `--retry-initial-delay` - Initial retry delay in milliseconds (default: `1000`)
 * `--retry-max-delay` - Maximum retry delay in milliseconds (default: `30000`)
+* `--github-token` - GitHub API token for authenticated GitHub requests. If omitted, the CLI reads `GH_TOKEN` and then `GITHUB_TOKEN`
 
 **Examples:**
 
@@ -71,23 +82,51 @@ get-version --source dockerhub-imagetag --repo alpine --filters "LAST-1"
 get-version --source dockerhub-imagetag --repo alpine \
   --filters "[0-9]+.[0-9]+.LAST" --out-format json
 
-# Get latest Go release from GitHub
+# Get latest Go release from GitHub (uses GH_TOKEN/GITHUB_TOKEN when set)
 get-version --source github-release --repo golang/go --filters "LAST"
+
+# Or pass the token explicitly
+get-version --source github-release --repo golang/go --filters "LAST" \
+  --github-token "$GH_TOKEN"
 
 # Get all 3.x versions from latest major
 get-version --source dockerhub-imagetag --repo alpine --filters "LAST.*.*"
 ```
 
-### Rate Limiting
+### GitHub Authentication and Rate Limiting
 
-GitHub API has rate limits that may cause `403 Forbidden` errors. The tool handles this with configurable exponential backoff:
+GitHub API has low unauthenticated rate limits that may cause `403 Forbidden` errors. For GitHub release and tag sources, prefer authenticated requests:
 
 ```bash
-# Default behavior: 5 retries, starting at 1s delay, max 30s delay
+# CLI: export GH_TOKEN/GITHUB_TOKEN once
+export GH_TOKEN="<github-token>"
 get-version --source github-release --repo golang/go --filters "LAST"
+
+# Or pass a token explicitly
+get-version --source github-tag --repo kubernetes/kubernetes --filters "LAST" \
+  --github-token "$GH_TOKEN"
+```
+
+```yaml
+# GitHub Action: use the workflow's default GITHUB_TOKEN
+- uses: scylladb-actions/get-version@v0.4.5
+  with:
+    source: github-release
+    repo: golang/go
+    filters: LAST
+    github-token: ${{ secrets.GITHUB_TOKEN }}
+```
+
+The tool also handles rate limits with configurable exponential backoff:
+
+```bash
+# Default retry behavior: 5 retries, starting at 1s delay, max 30s delay
+get-version --source github-release --repo golang/go --filters "LAST" \
+  --github-token "$GH_TOKEN"
 
 # Custom retry settings for high-traffic scenarios
 get-version --source github-tag --repo kubernetes/kubernetes --filters "LAST" \
+  --github-token "$GH_TOKEN" \
   --retry-max 10 \
   --retry-initial-delay 2000 \
   --retry-max-delay 60000
